@@ -1,3 +1,4 @@
+//landing activity
 package com.example.worktracker;
 
 import android.content.Context;
