@@ -33,8 +33,8 @@ public class LoginActivity extends AppCompatActivity {
             }
 
             // Save login to SharedPreferences
-            SharedPreferences prefs = getSharedPreferences("WorkTrackerPrefs", MODE_PRIVATE);
-            SharedPreferences.Editor editor = prefs.edit();
+            SharedPreferences pref = getSharedPreferences("WorkTrackerPrefs", MODE_PRIVATE);
+            SharedPreferences.Editor editor = pref.edit();
             editor.putString("username", user.getUsername());
             editor.putBoolean("isAdmin", user.isAdmin());
             editor.apply();
