@@ -28,6 +28,10 @@ public class MainActivity extends AppCompatActivity {
         Button buttonSignUp = findViewById(R.id.buttonSignUp);
 
         buttonLogin.setOnClickListener(v -> {
+            startActivity(LoginActivity.intentFactory(this));
+
+        });
+        buttonSignUp.setOnClickListener(v -> {
             startActivity(SignUpActivity.intentFactory(this));
         });
 
