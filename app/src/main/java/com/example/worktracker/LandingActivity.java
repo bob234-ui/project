@@ -1,4 +1,4 @@
-//Landing page activity
+//Landing Page Activity
 package com.example.worktracker;
 
 import android.content.Context;
