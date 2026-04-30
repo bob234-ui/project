@@ -15,12 +15,13 @@ public class LandingActivity extends AppCompatActivity{
     protected void onCreate(Bundle savedInstanceState){
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_landing);
-        SharedPreferences pref = getSharedPreferences("WorkTrackerPref", MODE_PRIVATE);
-        String username = pref.getString("username", "User");
-        boolean isAdmin = pref.getBoolean("isAdmin", false);
+        SharedPreferences pref = getSharedPreferences(MainActivity.PREFS_NAME, MODE_PRIVATE);
+        String username = pref.getString(MainActivity.KEY_USERNAME, "User");
+        boolean isAdmin = pref.getBoolean(MainActivity.KEY_IS_ADMIN, false);
         TextView textViewUsername = findViewById(R.id.textViewUsername);
         Button buttonAdminOnly = findViewById(R.id.buttonAdminOnly);
-        Button buttonLogout = findViewById(R.id.buttonLogout);        textViewUsername.setText("Welcome, " + username);
+        Button buttonLogout = findViewById(R.id.buttonLogout);
+        textViewUsername.setText("Welcome, " + username);
 
         //admin button only for admins
         if (isAdmin){

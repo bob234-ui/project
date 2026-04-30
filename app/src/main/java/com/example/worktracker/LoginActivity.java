@@ -33,10 +33,10 @@ public class LoginActivity extends AppCompatActivity {
             }
 
             // Save login to SharedPreferences
-            SharedPreferences pref = getSharedPreferences("WorkTrackerPrefs", MODE_PRIVATE);
+            SharedPreferences pref = getSharedPreferences(MainActivity.PREFS_NAME, MODE_PRIVATE);
             SharedPreferences.Editor editor = pref.edit();
-            editor.putString("username", user.getUsername());
-            editor.putBoolean("isAdmin", user.isAdmin());
+            editor.putString(MainActivity.KEY_USERNAME, user.getUsername());
+            editor.putBoolean(MainActivity.KEY_IS_ADMIN, user.isAdmin());
             editor.apply();
 
             // Landing page

@@ -10,6 +10,9 @@ import android.widget.Button;
 import androidx.appcompat.app.AppCompatActivity;
 
 public class MainActivity extends AppCompatActivity {
+    public static final String PREFS_NAME = "WorkTrackerPrefs";
+    public static final String KEY_USERNAME = "username";
+    public static final String KEY_IS_ADMIN = "isAdmin";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
