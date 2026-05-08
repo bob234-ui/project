@@ -1,6 +1,5 @@
 package com.example.worktracker;
 
-import androidx.room.ColumnInfo;
 import androidx.room.Entity;
 import androidx.room.PrimaryKey;
 
@@ -8,52 +7,25 @@ import androidx.room.PrimaryKey;
 public class Shift {
 
     @PrimaryKey(autoGenerate = true)
-    private int shiftId;
+    private int shift_id;
 
-    @ColumnInfo(name = "username")
-    private String username;
+    private int user_id;
+    private String shift_date;
+    private String shift_start;
+    private String shift_end;
 
-    @ColumnInfo(name = "start_time")
-    private long startTime;
-
-    @ColumnInfo(name = "end_time")
-    private long endTime;
-
-    public Shift(String username, long startTime, long endTime) {
-        this.username = username;
-        this.startTime = startTime;
-        this.endTime = endTime;
+    public Shift(int user_id, String shift_date, String shift_start, String shift_end) {
+        this.user_id = user_id;
+        this.shift_date = shift_date;
+        this.shift_start = shift_start;
+        this.shift_end = shift_end;
     }
 
-    public int getShiftId() {
-        return shiftId;
-    }
+    public int getShift_id() { return shift_id; }
+    public void setShift_id(int shift_id) { this.shift_id = shift_id; }
 
-    public void setShiftId(int shiftId) {
-        this.shiftId = shiftId;
-    }
-
-    public String getUsername() {
-        return username;
-    }
-
-    public void setUsername(String username) {
-        this.username = username;
-    }
-
-    public long getStartTime() {
-        return startTime;
-    }
-
-    public void setStartTime(long startTime) {
-        this.startTime = startTime;
-    }
-
-    public long getEndTime() {
-        return endTime;
-    }
-
-    public void setEndTime(long endTime) {
-        this.endTime = endTime;
-    }
+    public int getUser_id() { return user_id; }
+    public String getShift_date() { return shift_date; }
+    public String getShift_start() { return shift_start; }
+    public String getShift_end() { return shift_end; }
 }
