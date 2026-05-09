@@ -1,5 +1,6 @@
 package com.example.worktracker;
 
+import androidx.lifecycle.LiveData;
 import androidx.room.Dao;
 import androidx.room.Insert;
 import androidx.room.Query;
@@ -17,6 +18,9 @@ public interface ShiftDao {
 
     @Query("SELECT * FROM shifts")
     List<Shift> getAllShifts();
+
+    @Query("SELECT * FROM shifts")
+    LiveData<List<Shift>> getAllShiftsLiveData();
 
     @Query("DELETE FROM shifts")
     void deleteAllShifts();

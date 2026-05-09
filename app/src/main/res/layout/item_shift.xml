@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="16dp"
+    android:layout_marginBottom="8dp">
+
+    <TextView
+        android:id="@+id/textViewShiftDate"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Date:" />
+
+    <TextView
+        android:id="@+id/textViewShiftStart"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Start:" />
+
+    <TextView
+        android:id="@+id/textViewShiftEnd"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="End:" />
+
+    <TextView
+        android:id="@+id/textViewBreakCount"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Breaks taken:" />
+
+    <TextView
+        android:id="@+id/textViewBreakTotal"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Total break time:" />
+
+</LinearLayout>
