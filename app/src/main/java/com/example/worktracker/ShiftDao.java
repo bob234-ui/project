@@ -12,8 +12,8 @@ public interface ShiftDao {
     @Insert
     void insert(Shift shift);
 
-    @Query("SELECT * FROM shifts WHERE username = :username")
-    List<Shift> getShiftsForUser(String username);
+    @Query("SELECT * FROM shifts WHERE user_id = :userId")
+    List<Shift> getShiftsForUser(int userId);
 
     @Query("SELECT * FROM shifts")
     List<Shift> getAllShifts();
