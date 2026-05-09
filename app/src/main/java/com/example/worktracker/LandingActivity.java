@@ -5,7 +5,6 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.os.Handler;
-import android.os.Looper;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
@@ -21,30 +20,30 @@ public class LandingActivity extends AppCompatActivity {
 
     private boolean shiftStarted = false;
     private boolean breakStarted = false;
-    private boolean tookBreak = false;
 
-    private long shiftStartTime = 0;
-    private long breakStartTime = 0;
-    private long breakEndTime = 0;
-    private long totalBreakTime = 0;
+    private long shiftStartMillis = 0;
+    private long breakStartMillis = 0;
 
-    private SharedPreferences pref;
+    private String shiftStartTime = "";
+    private String shiftDate = "";
+
+    private int breakCount = 0;
+    private long totalBreakMillis = 0;
+
+    private Handler handler = new Handler();
 
     private TextView textViewTimer;
     private TextView textViewBreakTimer;
+    private Button buttonShift;
+    private Button buttonBreak;
 
-    private Handler timerHandler = new Handler(Looper.getMainLooper());
-    private Handler breakTimerHandler = new Handler(Looper.getMainLooper());
-
-    private Runnable timerRunnable = new Runnable() {
+    private Runnable shiftTimerRunnable = new Runnable() {
         @Override
         public void run() {
             if (shiftStarted) {
-                long currentTime = System.currentTimeMillis();
-                long elapsedTime = currentTime - shiftStartTime;
-
-                textViewTimer.setText("Shift Timer: " + formatTimer(elapsedTime));
-                timerHandler.postDelayed(this, 1000);
+                long elapsed = System.currentTimeMillis() - shiftStartMillis;
+                textViewTimer.setText("Shift Timer: " + formatTime(elapsed));
+                handler.postDelayed(this, 1000);
             }
         }
     };
@@ -53,11 +52,9 @@ public class LandingActivity extends AppCompatActivity {
         @Override
         public void run() {
             if (breakStarted) {
-                long currentTime = System.currentTimeMillis();
-                long elapsedBreakTime = totalBreakTime + (currentTime - breakStartTime);
-
-                textViewBreakTimer.setText("Break Timer: " + formatTimer(elapsedBreakTime));
-                breakTimerHandler.postDelayed(this, 1000);
+                long elapsed = System.currentTimeMillis() - breakStartMillis;
+                textViewBreakTimer.setText("Break Timer: " + formatTime(elapsed));
+                handler.postDelayed(this, 1000);
             }
         }
     };
@@ -67,174 +64,130 @@ public class LandingActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_landing);
 
-        pref = getSharedPreferences(MainActivity.PREFS_NAME, MODE_PRIVATE);
-
-        String username = pref.getString(MainActivity.KEY_USERNAME, "User");
+        SharedPreferences pref = getSharedPreferences(MainActivity.PREFS_NAME, MODE_PRIVATE);
+        String username = pref.getString(MainActivity.KEY_USERNAME, null);
         boolean isAdmin = pref.getBoolean(MainActivity.KEY_IS_ADMIN, false);
 
+        if (username == null) {
+            startActivity(MainActivity.intentFactory(this));
+            finish();
+            return;
+        }
+
         TextView textViewUsername = findViewById(R.id.textViewUsername);
+
+        buttonShift = findViewById(R.id.buttonShift);
+        buttonBreak = findViewById(R.id.buttonBreak);
+
+        Button buttonPastShifts = findViewById(R.id.buttonPastShifts);
+        Button buttonLogout = findViewById(R.id.buttonLogout);
+
+        Button buttonAdminOnly = findViewById(R.id.buttonAdminOnly);
+        Button buttonOngoingShifts = findViewById(R.id.buttonOngoingShifts);
+        Button buttonCalendar = findViewById(R.id.buttonCalendar);
 
         textViewTimer = findViewById(R.id.textViewTimer);
         textViewBreakTimer = findViewById(R.id.textViewBreakTimer);
 
-        Button buttonShift = findViewById(R.id.buttonShift);
-        Button buttonBreak = findViewById(R.id.buttonBreak);
-        Button buttonPastShifts = findViewById(R.id.buttonPastShifts);
-        Button buttonSettings = findViewById(R.id.buttonSettings);
-
-        Button buttonOngoingShifts = findViewById(R.id.buttonOngoingShifts);
-        Button buttonCalendar = findViewById(R.id.buttonCalendar);
-        Button buttonAdminOnly = findViewById(R.id.buttonAdminOnly);
-
-        Button buttonLogout = findViewById(R.id.buttonLogout);
+        textViewUsername.setText("Welcome, " + username);
 
         if (isAdmin) {
-            textViewUsername.setText("Welcome, " + username + " (Admin)");
-
-            buttonShift.setVisibility(View.GONE);
-            buttonBreak.setVisibility(View.GONE);
-            buttonPastShifts.setVisibility(View.GONE);
-            buttonSettings.setVisibility(View.GONE);
-
-            textViewTimer.setVisibility(View.GONE);
-            textViewBreakTimer.setVisibility(View.GONE);
-
+            buttonAdminOnly.setVisibility(View.VISIBLE);
             buttonOngoingShifts.setVisibility(View.VISIBLE);
             buttonCalendar.setVisibility(View.VISIBLE);
-            buttonAdminOnly.setVisibility(View.VISIBLE);
-
         } else {
-            textViewUsername.setText("Welcome, " + username + " (Normal User)");
-
-            buttonShift.setVisibility(View.VISIBLE);
-            buttonBreak.setVisibility(View.VISIBLE);
-            buttonPastShifts.setVisibility(View.VISIBLE);
-            buttonSettings.setVisibility(View.VISIBLE);
-
-            textViewTimer.setVisibility(View.VISIBLE);
-            textViewBreakTimer.setVisibility(View.GONE);
-
+            buttonAdminOnly.setVisibility(View.GONE);
             buttonOngoingShifts.setVisibility(View.GONE);
             buttonCalendar.setVisibility(View.GONE);
-            buttonAdminOnly.setVisibility(View.GONE);
         }
 
         buttonShift.setOnClickListener(v -> {
+            ShiftDao shiftDao = AppDatabase.getDatabase(this).shiftDao();
+
             if (!shiftStarted) {
                 shiftStarted = true;
-                breakStarted = false;
-                tookBreak = false;
 
-                shiftStartTime = System.currentTimeMillis();
-                breakStartTime = 0;
-                breakEndTime = 0;
-                totalBreakTime = 0;
+                shiftStartMillis = System.currentTimeMillis();
+                shiftDate = getCurrentDate();
+                shiftStartTime = getCurrentTime();
+
+                breakCount = 0;
+                totalBreakMillis = 0;
 
                 buttonShift.setText("Stop Shift");
-                buttonBreak.setText("Start Break");
-
                 textViewTimer.setText("Shift Timer: 00:00:00");
-                textViewBreakTimer.setText("Break Timer: 00:00:00");
-                textViewBreakTimer.setVisibility(View.GONE);
 
-                timerHandler.post(timerRunnable);
+                handler.post(shiftTimerRunnable);
 
-                Toast.makeText(this, "Shift started", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, "Shift started at " + shiftStartTime, Toast.LENGTH_SHORT).show();
 
             } else {
                 shiftStarted = false;
 
-                long shiftEndTime = System.currentTimeMillis();
-
-                timerHandler.removeCallbacks(timerRunnable);
-                breakTimerHandler.removeCallbacks(breakTimerRunnable);
-
-                textViewTimer.setText("Shift Timer: 00:00:00");
-                textViewBreakTimer.setText("Break Timer: 00:00:00");
-                textViewBreakTimer.setVisibility(View.GONE);
+                String shiftEndTime = getCurrentTime();
 
                 if (breakStarted) {
-                    breakEndTime = System.currentTimeMillis();
-                    totalBreakTime += breakEndTime - breakStartTime;
+                    long breakDuration = System.currentTimeMillis() - breakStartMillis;
+                    totalBreakMillis += breakDuration;
+                    breakCount++;
+
                     breakStarted = false;
                     buttonBreak.setText("Start Break");
+                    textViewBreakTimer.setVisibility(View.GONE);
+                    handler.removeCallbacks(breakTimerRunnable);
                 }
 
-                String breakInfo;
+                Shift shift = new Shift(
+                        1,
+                        shiftDate,
+                        shiftStartTime,
+                        shiftEndTime,
+                        breakCount,
+                        totalBreakMillis
+                );
 
-                if (tookBreak) {
-                    breakInfo =
-                            "Break Taken: Yes\n" +
-                                    "Break Started: " + formatTime(breakStartTime) + "\n" +
-                                    "Break Ended: " + formatTime(breakEndTime) + "\n" +
-                                    "Break Total: " + getDuration(0, totalBreakTime) + "\n";
-                } else {
-                    breakInfo = "Break Taken: No\n";
-                }
-
-                String shiftRecord =
-                        "Shift\n" +
-                                "Started: " + formatTime(shiftStartTime) + "\n" +
-                                "Ended: " + formatTime(shiftEndTime) + "\n" +
-                                "Shift Total: " + getDuration(shiftStartTime, shiftEndTime) + "\n" +
-                                breakInfo +
-                                "\n";
-
-                savePastShift(shiftRecord);
+                shiftDao.insert(shift);
 
                 buttonShift.setText("Start Shift");
-                buttonBreak.setText("Start Break");
+                handler.removeCallbacks(shiftTimerRunnable);
 
-                Toast.makeText(this, "Shift saved", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, "Shift saved!", Toast.LENGTH_SHORT).show();
             }
         });
 
         buttonBreak.setOnClickListener(v -> {
             if (!shiftStarted) {
-                Toast.makeText(this, "Start a shift first", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, "Start a shift first.", Toast.LENGTH_SHORT).show();
                 return;
             }
 
             if (!breakStarted) {
                 breakStarted = true;
-                tookBreak = true;
 
-                breakStartTime = System.currentTimeMillis();
-
+                breakStartMillis = System.currentTimeMillis();
                 buttonBreak.setText("Stop Break");
-
                 textViewBreakTimer.setVisibility(View.VISIBLE);
-                textViewBreakTimer.setText("Break Timer: " + formatTimer(totalBreakTime));
-                breakTimerHandler.post(breakTimerRunnable);
+                textViewBreakTimer.setText("Break Timer: 00:00:00");
 
-                Toast.makeText(this, "Break started", Toast.LENGTH_SHORT).show();
+                handler.post(breakTimerRunnable);
 
             } else {
                 breakStarted = false;
 
-                breakEndTime = System.currentTimeMillis();
-                totalBreakTime += breakEndTime - breakStartTime;
-
-                breakTimerHandler.removeCallbacks(breakTimerRunnable);
+                long breakDuration = System.currentTimeMillis() - breakStartMillis;
+                totalBreakMillis += breakDuration;
+                breakCount++;
 
                 buttonBreak.setText("Start Break");
-                textViewBreakTimer.setText("Break Timer: " + formatTimer(totalBreakTime));
+                handler.removeCallbacks(breakTimerRunnable);
 
-                Toast.makeText(
-                        this,
-                        "Break ended: " + getDuration(0, totalBreakTime),
-                        Toast.LENGTH_SHORT
-                ).show();
+                Toast.makeText(this, "Break ended.", Toast.LENGTH_SHORT).show();
             }
         });
 
-        buttonPastShifts.setOnClickListener(v ->
-                startActivity(PastShiftsActivity.intentFactory(this))
-        );
-
-        buttonSettings.setOnClickListener(v ->
-                startActivity(SettingsActivity.intentFactory(this))
-        );
+        buttonPastShifts.setOnClickListener(v -> {
+            startActivity(PastShiftsActivity.intentFactory(this));
+        });
 
         buttonLogout.setOnClickListener(v -> {
             SharedPreferences.Editor editor = pref.edit();
@@ -244,44 +197,25 @@ public class LandingActivity extends AppCompatActivity {
             Intent intent = MainActivity.intentFactory(this);
             intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
             startActivity(intent);
+            finish();
         });
     }
 
-    private void savePastShift(String newShift) {
-        String oldShifts = pref.getString("pastShifts", "");
-        String updatedShifts = newShift + oldShifts;
-
-        SharedPreferences.Editor editor = pref.edit();
-        editor.putString("pastShifts", updatedShifts);
-        editor.apply();
+    private String getCurrentDate() {
+        return new SimpleDateFormat("MM/dd/yyyy", Locale.US).format(new Date());
     }
 
-    private String formatTime(long time) {
-        SimpleDateFormat formatter = new SimpleDateFormat("MM/dd/yyyy hh:mm a", Locale.getDefault());
-        return formatter.format(new Date(time));
+    private String getCurrentTime() {
+        return new SimpleDateFormat("hh:mm a", Locale.US).format(new Date());
     }
 
-    private String getDuration(long start, long end) {
-        long diff = (start == 0) ? end : (end - start);
+    private String formatTime(long millis) {
+        int seconds = (int) (millis / 1000);
+        int hours = seconds / 3600;
+        int minutes = (seconds % 3600) / 60;
+        int secs = seconds % 60;
 
-        long seconds = diff / 1000;
-        long minutes = seconds / 60;
-        long hours = minutes / 60;
-
-        minutes %= 60;
-        seconds %= 60;
-
-        return hours + " hr " + minutes + " min " + seconds + " sec";
-    }
-
-    private String formatTimer(long ms) {
-        long totalSeconds = ms / 1000;
-
-        long hours = totalSeconds / 3600;
-        long minutes = (totalSeconds % 3600) / 60;
-        long seconds = totalSeconds % 60;
-
-        return String.format(Locale.getDefault(), "%02d:%02d:%02d", hours, minutes, seconds);
+        return String.format(Locale.US, "%02d:%02d:%02d", hours, minutes, secs);
     }
 
     public static Intent intentFactory(Context context) {

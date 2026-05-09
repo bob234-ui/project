@@ -2,7 +2,6 @@ package com.example.worktracker;
 
 import android.content.Context;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.widget.Button;
 
@@ -17,16 +16,6 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
-        SharedPreferences pref = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
-        String username = pref.getString(KEY_USERNAME, null);
-
-        if (username != null) {
-            startActivity(LandingActivity.intentFactory(this));
-            finish();
-            return;
-        }
-
         setContentView(R.layout.activity_main);
 
         Button buttonLogin = findViewById(R.id.buttonLogin);

@@ -2,39 +2,48 @@ package com.example.worktracker;
 
 import android.content.Context;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.widget.Button;
 import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+
+import java.util.ArrayList;
 
 public class PastShiftsActivity extends AppCompatActivity {
 
-    private TextView textViewPastShifts;
+    private TextView textViewNoShifts;
+    private ShiftAdapter shiftAdapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_past_shifts);
 
-        textViewPastShifts = findViewById(R.id.textViewPastShifts);
+        textViewNoShifts = findViewById(R.id.textViewNoShifts);
+        RecyclerView recyclerView = findViewById(R.id.recyclerViewPastShifts);
         Button buttonBack = findViewById(R.id.buttonBack);
 
-        loadPastShifts();
+        ShiftDao shiftDao = AppDatabase.getDatabase(this).shiftDao();
+
+        shiftAdapter = new ShiftAdapter(new ArrayList<>());
+
+        recyclerView.setLayoutManager(new LinearLayoutManager(this));
+        recyclerView.setAdapter(shiftAdapter);
+
+        shiftDao.getAllShiftsLiveData().observe(this, shifts -> {
+            shiftAdapter.updateShifts(shifts);
+
+            if (shifts.isEmpty()) {
+                textViewNoShifts.setText("No past shifts yet.");
+            } else {
+                textViewNoShifts.setText("");
+            }
+        });
 
         buttonBack.setOnClickListener(v -> finish());
-    }
-
-    private void loadPastShifts() {
-        SharedPreferences pref = getSharedPreferences(MainActivity.PREFS_NAME, MODE_PRIVATE);
-        String pastShifts = pref.getString("pastShifts", "");
-
-        if (pastShifts.isEmpty()) {
-            textViewPastShifts.setText("No past shifts yet.");
-        } else {
-            textViewPastShifts.setText(pastShifts);
-        }
     }
 
     public static Intent intentFactory(Context context) {

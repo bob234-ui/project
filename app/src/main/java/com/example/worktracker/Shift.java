@@ -14,18 +14,48 @@ public class Shift {
     private String shift_start;
     private String shift_end;
 
-    public Shift(int user_id, String shift_date, String shift_start, String shift_end) {
+    private int break_count;
+    private long total_break_millis;
+
+    public Shift(int user_id, String shift_date, String shift_start, String shift_end,
+                 int break_count, long total_break_millis) {
         this.user_id = user_id;
         this.shift_date = shift_date;
         this.shift_start = shift_start;
         this.shift_end = shift_end;
+        this.break_count = break_count;
+        this.total_break_millis = total_break_millis;
     }
 
-    public int getShift_id() { return shift_id; }
-    public void setShift_id(int shift_id) { this.shift_id = shift_id; }
+    public int getShift_id() {
+        return shift_id;
+    }
 
-    public int getUser_id() { return user_id; }
-    public String getShift_date() { return shift_date; }
-    public String getShift_start() { return shift_start; }
-    public String getShift_end() { return shift_end; }
+    public void setShift_id(int shift_id) {
+        this.shift_id = shift_id;
+    }
+
+    public int getUser_id() {
+        return user_id;
+    }
+
+    public String getShift_date() {
+        return shift_date;
+    }
+
+    public String getShift_start() {
+        return shift_start;
+    }
+
+    public String getShift_end() {
+        return shift_end;
+    }
+
+    public int getBreak_count() {
+        return break_count;
+    }
+
+    public long getTotal_break_millis() {
+        return total_break_millis;
+    }
 }
