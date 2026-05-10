@@ -25,6 +25,8 @@
         <activity android:name=".LandingActivity"    />
         <activity android:name=".PastShiftsActivity" />
         <activity android:name=".SettingsActivity"   />
+        <activity android:name=".OngoingShiftsActivity" />
+        <activity android:name=".AdminCalendarActivity" />
     </application>
 
 </manifest>
