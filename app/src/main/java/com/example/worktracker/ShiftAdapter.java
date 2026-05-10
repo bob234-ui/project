@@ -1,8 +1,7 @@
 package com.example.worktracker;
 
-import android.view.LayoutInflater;
-import android.view.View;
 import android.view.ViewGroup;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -27,9 +26,23 @@ public class ShiftAdapter extends RecyclerView.Adapter<ShiftAdapter.ShiftViewHol
     @NonNull
     @Override
     public ShiftViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        View view = LayoutInflater.from(parent.getContext())
-                .inflate(R.layout.item_shift, parent, false);
-        return new ShiftViewHolder(view);
+        LinearLayout layout = new LinearLayout(parent.getContext());
+        layout.setOrientation(LinearLayout.VERTICAL);
+        layout.setPadding(32, 24, 32, 24);
+
+        TextView date = new TextView(parent.getContext());
+        TextView start = new TextView(parent.getContext());
+        TextView end = new TextView(parent.getContext());
+        TextView breaks = new TextView(parent.getContext());
+        TextView breakTotal = new TextView(parent.getContext());
+
+        layout.addView(date);
+        layout.addView(start);
+        layout.addView(end);
+        layout.addView(breaks);
+        layout.addView(breakTotal);
+
+        return new ShiftViewHolder(layout, date, start, end, breaks, breakTotal);
     }
 
     @Override
@@ -65,14 +78,21 @@ public class ShiftAdapter extends RecyclerView.Adapter<ShiftAdapter.ShiftViewHol
         TextView textViewBreakCount;
         TextView textViewBreakTotal;
 
-        public ShiftViewHolder(@NonNull View itemView) {
+        public ShiftViewHolder(
+                @NonNull LinearLayout itemView,
+                TextView date,
+                TextView start,
+                TextView end,
+                TextView breakCount,
+                TextView breakTotal
+        ) {
             super(itemView);
 
-            textViewDate = itemView.findViewById(R.id.textViewShiftDate);
-            textViewStart = itemView.findViewById(R.id.textViewShiftStart);
-            textViewEnd = itemView.findViewById(R.id.textViewShiftEnd);
-            textViewBreakCount = itemView.findViewById(R.id.textViewBreakCount);
-            textViewBreakTotal = itemView.findViewById(R.id.textViewBreakTotal);
+            textViewDate = date;
+            textViewStart = start;
+            textViewEnd = end;
+            textViewBreakCount = breakCount;
+            textViewBreakTotal = breakTotal;
         }
     }
 }

@@ -15,8 +15,12 @@ import androidx.appcompat.app.AppCompatActivity;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
+import java.util.List;
+import androidx.appcompat.app.AlertDialog;
 
 public class LandingActivity extends AppCompatActivity {
+
+    private int ongoingShiftId = -1;
 
     private boolean shiftStarted = false;
     private boolean breakStarted = false;
@@ -80,6 +84,7 @@ public class LandingActivity extends AppCompatActivity {
         buttonBreak = findViewById(R.id.buttonBreak);
 
         Button buttonPastShifts = findViewById(R.id.buttonPastShifts);
+        Button buttonSettings = findViewById(R.id.buttonSettings);
         Button buttonLogout = findViewById(R.id.buttonLogout);
 
         Button buttonAdminOnly = findViewById(R.id.buttonAdminOnly);
@@ -90,19 +95,38 @@ public class LandingActivity extends AppCompatActivity {
         textViewBreakTimer = findViewById(R.id.textViewBreakTimer);
 
         textViewUsername.setText("Welcome, " + username);
+        if (!isAdmin) {
+            checkUpcomingShifts(username);
+        }
 
         if (isAdmin) {
+            buttonShift.setVisibility(View.GONE);
+            buttonBreak.setVisibility(View.GONE);
+            buttonPastShifts.setVisibility(View.GONE);
+            textViewTimer.setVisibility(View.GONE);
+            textViewBreakTimer.setVisibility(View.GONE);
+
             buttonAdminOnly.setVisibility(View.VISIBLE);
             buttonOngoingShifts.setVisibility(View.VISIBLE);
             buttonCalendar.setVisibility(View.VISIBLE);
         } else {
+            buttonShift.setVisibility(View.VISIBLE);
+            buttonBreak.setVisibility(View.VISIBLE);
+            buttonPastShifts.setVisibility(View.VISIBLE);
+            textViewTimer.setVisibility(View.VISIBLE);
+
             buttonAdminOnly.setVisibility(View.GONE);
             buttonOngoingShifts.setVisibility(View.GONE);
             buttonCalendar.setVisibility(View.GONE);
         }
 
+        buttonCalendar.setOnClickListener(v -> {
+            startActivity(AdminCalendarActivity.intentFactory(this));
+        });
+
         buttonShift.setOnClickListener(v -> {
             ShiftDao shiftDao = AppDatabase.getDatabase(this).shiftDao();
+            OngoingShiftDao ongoingShiftDao = AppDatabase.getDatabase(this).ongoingShiftDao();
 
             if (!shiftStarted) {
                 shiftStarted = true;
@@ -113,6 +137,19 @@ public class LandingActivity extends AppCompatActivity {
 
                 breakCount = 0;
                 totalBreakMillis = 0;
+
+                OngoingShift ongoingShift = new OngoingShift(
+                        username,
+                        shiftDate,
+                        shiftStartTime,
+                        shiftStartMillis,
+                        0,
+                        0,
+                        false,
+                        0
+                );
+
+                ongoingShiftId = (int) ongoingShiftDao.insert(ongoingShift);
 
                 buttonShift.setText("Stop Shift");
                 textViewTimer.setText("Shift Timer: 00:00:00");
@@ -125,6 +162,12 @@ public class LandingActivity extends AppCompatActivity {
                 shiftStarted = false;
 
                 String shiftEndTime = getCurrentTime();
+
+                OngoingShift ongoingShift = null;
+
+                if (ongoingShiftId != -1) {
+                    ongoingShift = ongoingShiftDao.getOngoingShiftById(ongoingShiftId);
+                }
 
                 if (breakStarted) {
                     long breakDuration = System.currentTimeMillis() - breakStartMillis;
@@ -148,6 +191,12 @@ public class LandingActivity extends AppCompatActivity {
 
                 shiftDao.insert(shift);
 
+                if (ongoingShift != null) {
+                    ongoingShiftDao.delete(ongoingShift);
+                }
+
+                ongoingShiftId = -1;
+
                 buttonShift.setText("Start Shift");
                 handler.removeCallbacks(shiftTimerRunnable);
 
@@ -161,6 +210,8 @@ public class LandingActivity extends AppCompatActivity {
                 return;
             }
 
+            OngoingShiftDao ongoingShiftDao = AppDatabase.getDatabase(this).ongoingShiftDao();
+
             if (!breakStarted) {
                 breakStarted = true;
 
@@ -168,6 +219,16 @@ public class LandingActivity extends AppCompatActivity {
                 buttonBreak.setText("Stop Break");
                 textViewBreakTimer.setVisibility(View.VISIBLE);
                 textViewBreakTimer.setText("Break Timer: 00:00:00");
+
+                if (ongoingShiftId != -1) {
+                    OngoingShift ongoingShift = ongoingShiftDao.getOngoingShiftById(ongoingShiftId);
+
+                    if (ongoingShift != null) {
+                        ongoingShift.setBreak_active(true);
+                        ongoingShift.setBreak_start_millis(breakStartMillis);
+                        ongoingShiftDao.update(ongoingShift);
+                    }
+                }
 
                 handler.post(breakTimerRunnable);
 
@@ -181,12 +242,32 @@ public class LandingActivity extends AppCompatActivity {
                 buttonBreak.setText("Start Break");
                 handler.removeCallbacks(breakTimerRunnable);
 
+                if (ongoingShiftId != -1) {
+                    OngoingShift ongoingShift = ongoingShiftDao.getOngoingShiftById(ongoingShiftId);
+
+                    if (ongoingShift != null) {
+                        ongoingShift.setBreak_active(false);
+                        ongoingShift.setBreak_start_millis(0);
+                        ongoingShift.setBreak_count(breakCount);
+                        ongoingShift.setTotal_break_millis(totalBreakMillis);
+                        ongoingShiftDao.update(ongoingShift);
+                    }
+                }
+
                 Toast.makeText(this, "Break ended.", Toast.LENGTH_SHORT).show();
             }
         });
 
         buttonPastShifts.setOnClickListener(v -> {
             startActivity(PastShiftsActivity.intentFactory(this));
+        });
+
+        buttonSettings.setOnClickListener(v -> {
+            startActivity(SettingsActivity.intentFactory(this));
+        });
+
+        buttonOngoingShifts.setOnClickListener(v -> {
+            startActivity(OngoingShiftsActivity.intentFactory(this));
         });
 
         buttonLogout.setOnClickListener(v -> {
@@ -199,6 +280,35 @@ public class LandingActivity extends AppCompatActivity {
             startActivity(intent);
             finish();
         });
+    }
+
+    private void checkUpcomingShifts(String username) {
+        ScheduledShiftDao scheduledShiftDao = AppDatabase.getDatabase(this).scheduledShiftDao();
+
+        List<ScheduledShift> scheduledShifts =
+                scheduledShiftDao.getScheduledShiftsForUser(username);
+
+        if (scheduledShifts == null || scheduledShifts.isEmpty()) {
+            return;
+        }
+
+        StringBuilder message = new StringBuilder();
+
+        for (ScheduledShift shift : scheduledShifts) {
+            message.append("Date: ")
+                    .append(shift.getShift_date())
+                    .append("\nTime: ")
+                    .append(shift.getShift_start())
+                    .append(" - ")
+                    .append(shift.getShift_end())
+                    .append("\n\n");
+        }
+
+        new AlertDialog.Builder(this)
+                .setTitle("Upcoming Shift Reminder")
+                .setMessage("You have upcoming scheduled shift(s):\n\n" + message)
+                .setPositiveButton("OK", null)
+                .show();
     }
 
     private String getCurrentDate() {
