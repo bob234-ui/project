@@ -93,6 +93,15 @@
             android:layout_height="wrap_content"
             android:text="Logout" />
 
+        <TextView
+            android:id="@+id/textViewQuote"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Loading quote..."
+            android:textSize="16sp"
+            android:gravity="center"
+            android:layout_marginBottom="16dp" />
+
     </LinearLayout>
 
 </ScrollView>
