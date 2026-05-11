@@ -98,9 +98,6 @@ public class LandingActivity extends AppCompatActivity {
         textViewTimer = findViewById(R.id.textViewTimer);
         textViewBreakTimer = findViewById(R.id.textViewBreakTimer);
 
-        TextView textViewQuote = findViewById(R.id.textViewQuote);
-        loadQuote(textViewQuote);
-
         textViewUsername.setText("Welcome, " + username);
         if (!isAdmin) {
             checkUpcomingShifts(username);
@@ -347,25 +344,5 @@ public class LandingActivity extends AppCompatActivity {
         return new Intent(context, LandingActivity.class);
     }
 
-    private void loadQuote(TextView textViewQuote) {
-        QuoteApi quoteApi = RetrofitClient.getClient().create(QuoteApi.class);
 
-        quoteApi.getRandomQuote().enqueue(new retrofit2.Callback<java.util.List<QuoteResponse>>() {
-            @Override
-            public void onResponse(retrofit2.Call<java.util.List<QuoteResponse>> call,
-                                   retrofit2.Response<java.util.List<QuoteResponse>> response) {
-                if (response.isSuccessful() && response.body() != null && !response.body().isEmpty()) {
-                    QuoteResponse quote = response.body().get(0);
-                    textViewQuote.setText("\"" + quote.getQ() + "\"\n- " + quote.getA());
-                } else {
-                    textViewQuote.setText("Stay focused and keep working hard.");
-                }
-            }
-
-            @Override
-            public void onFailure(retrofit2.Call<java.util.List<QuoteResponse>> call, Throwable t) {
-                textViewQuote.setText("Stay focused and keep working hard.");
-            }
-        });
-    }
 }
