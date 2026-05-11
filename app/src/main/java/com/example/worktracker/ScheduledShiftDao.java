@@ -5,6 +5,7 @@ import androidx.room.Dao;
 import androidx.room.Delete;
 import androidx.room.Insert;
 import androidx.room.Query;
+import androidx.room.Update;
 
 import java.util.List;
 
@@ -26,4 +27,7 @@ public interface ScheduledShiftDao {
 
     @Query("SELECT * FROM scheduled_shifts WHERE username = :username")
     List<ScheduledShift> getScheduledShiftsForUser(String username);
+
+    @Update
+    void update(ScheduledShift scheduledShift);
 }
